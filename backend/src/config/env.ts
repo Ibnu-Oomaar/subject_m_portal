@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 const boolish = z.enum(['true', 'false']).transform((v) => v === 'true');
+const DEPLOYED_FRONTEND_ORIGIN = 'https://subject-m-portal.vercel.app';
 
 const schema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -37,7 +38,7 @@ function load() {
     isProduction: v.NODE_ENV === 'production',
     isTest: v.NODE_ENV === 'test',
     cookieSecure: v.COOKIE_SECURE ?? v.NODE_ENV === 'production',
-    appOrigins: v.APP_ORIGIN,
+    appOrigins: [...new Set([...v.APP_ORIGIN, DEPLOYED_FRONTEND_ORIGIN])],
     studentIdRegex: new RegExp(v.STUDENT_ID_PATTERN),
   };
 }
