@@ -1,0 +1,136 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+/* Design tokens. Neutral surfaces, hairline borders and one indigo accent (Linear-like). */
+:root {
+  --radius: 0.5rem;
+  --background: oklch(0.99 0.002 270);
+  --foreground: oklch(0.21 0.015 270);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.21 0.015 270);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.21 0.015 270);
+  --primary: oklch(0.52 0.19 276);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.96 0.005 270);
+  --secondary-foreground: oklch(0.28 0.015 270);
+  --muted: oklch(0.965 0.004 270);
+  --muted-foreground: oklch(0.5 0.015 270);
+  --accent: oklch(0.955 0.012 276);
+  --accent-foreground: oklch(0.28 0.06 276);
+  --destructive: oklch(0.56 0.21 27);
+  --border: oklch(0.92 0.006 270);
+  --input: oklch(0.9 0.006 270);
+  --ring: oklch(0.52 0.19 276 / 0.45);
+  --sidebar: oklch(0.975 0.004 270);
+
+  /* result states: missing / partial / entered / finalized */
+  --state-missing: oklch(0.52 0.02 270);
+  --state-partial: oklch(0.6 0.15 70);
+  --state-entered: oklch(0.55 0.15 245);
+  --state-finalized: oklch(0.55 0.15 155);
+
+  --chart-1: oklch(0.52 0.19 276);
+  --chart-2: oklch(0.62 0.13 195);
+  --chart-3: oklch(0.7 0.15 75);
+  --chart-4: oklch(0.6 0.19 15);
+  --chart-5: oklch(0.58 0.14 155);
+  --chart-grid: oklch(0.92 0.006 270);
+}
+
+.dark {
+  --background: oklch(0.17 0.008 270);
+  --foreground: oklch(0.95 0.004 270);
+  --card: oklch(0.205 0.009 270);
+  --card-foreground: oklch(0.95 0.004 270);
+  --popover: oklch(0.225 0.01 270);
+  --popover-foreground: oklch(0.95 0.004 270);
+  --primary: oklch(0.68 0.16 276);
+  --primary-foreground: oklch(0.17 0.01 270);
+  --secondary: oklch(0.26 0.01 270);
+  --secondary-foreground: oklch(0.93 0.004 270);
+  --muted: oklch(0.245 0.01 270);
+  --muted-foreground: oklch(0.7 0.012 270);
+  --accent: oklch(0.29 0.03 276);
+  --accent-foreground: oklch(0.94 0.02 276);
+  --destructive: oklch(0.68 0.19 25);
+  --border: oklch(0.3 0.01 270);
+  --input: oklch(0.34 0.012 270);
+  --ring: oklch(0.68 0.16 276 / 0.5);
+  --sidebar: oklch(0.19 0.009 270);
+
+  --state-missing: oklch(0.68 0.015 270);
+  --state-partial: oklch(0.78 0.14 75);
+  --state-entered: oklch(0.74 0.12 245);
+  --state-finalized: oklch(0.76 0.14 155);
+
+  --chart-1: oklch(0.7 0.15 276);
+  --chart-2: oklch(0.74 0.11 195);
+  --chart-3: oklch(0.8 0.13 80);
+  --chart-4: oklch(0.7 0.16 15);
+  --chart-5: oklch(0.74 0.13 155);
+  --chart-grid: oklch(0.3 0.01 270);
+}
+
+@theme inline {
+  --font-sans: 'Inter Variable', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --radius-sm: calc(var(--radius) - 3px);
+  --radius-md: calc(var(--radius) - 1px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-state-missing: var(--state-missing);
+  --color-state-partial: var(--state-partial);
+  --color-state-entered: var(--state-entered);
+  --color-state-finalized: var(--state-finalized);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    font-feature-settings: 'cv11', 'ss01';
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-foreground text-[13.5px] leading-5;
+  }
+  /* numbers line up in tables and grids */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 25%, transparent);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
