@@ -68,6 +68,10 @@ Serve `frontend/dist` and route `/api/*` (including WebSocket upgrades on `/api/
 and use HTTPS (cookies are `Secure` in production). Run `bun run migration:run` on every deploy. The backend's `build`
 script is a type-check because Bun executes the TypeScript directly.
 
+For the Render deployment, set `APP_ORIGIN=https://subject-m-portal.vercel.app` on the backend web service. Also set
+`REDIS_URL` to the connection URL of a provisioned Redis/Key Value service; `localhost` is only suitable for local
+development. These are backend runtime settings, so configure them in Render's Environment settings and redeploy.
+
 ## Tests
 
 ```bash
