@@ -39,7 +39,11 @@ function readCookie(header: string | undefined, name: string): string | null {
  * ask to join a room); and sessions are re-checked every minute without being extended, so logging out or expiry ends
  * the connection.
  */
-@WebSocketGateway({ path: '/api/socket.io', serveClient: false, cors: false })
+@WebSocketGateway({
+  path: '/api/socket.io',
+  serveClient: false,
+  cors: { origin: env.appOrigins, credentials: true },
+})
 export class EventsGateway implements OnGatewayInit, OnModuleDestroy {
   private readonly logger = new Logger('Realtime');
   @WebSocketServer() private server!: Server;

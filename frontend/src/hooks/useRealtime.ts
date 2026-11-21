@@ -12,7 +12,8 @@ export function useRealtime(enabled: boolean): { connected: boolean } {
 
   useEffect(() => {
     if (!enabled) return;
-    const socket = io({ path: '/api/socket.io', transports: ['websocket'], withCredentials: true, reconnectionDelayMax: 15_000 });
+    const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') || undefined;
+    const socket = io(apiBaseUrl, { path: '/api/socket.io', transports: ['websocket'], withCredentials: true, reconnectionDelayMax: 15_000 });
     socket.on('connect', () => setConnected(true));
     socket.on('disconnect', () => setConnected(false));
     socket.on('connect_error', () => setConnected(false));

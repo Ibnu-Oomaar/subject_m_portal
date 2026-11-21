@@ -11,6 +11,10 @@ async function bootstrap() {
     logger: env.isProduction ? ['error', 'warn', 'log'] : ['error', 'warn', 'log', 'debug'],
   });
   configureApp(app);
+  app.enableCors({
+    origin: env.appOrigins,
+    credentials: true,
+  });
   app.enableShutdownHooks();
   await app.listen(env.PORT);
   new Logger('Bootstrap').log(`Mathematics portal API listening on :${env.PORT} (${env.NODE_ENV})`);

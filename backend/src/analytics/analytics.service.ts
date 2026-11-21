@@ -5,7 +5,7 @@ import { ASSESSMENT_CATEGORIES, ASSESSMENT_MAX_TOTAL } from '../assessments/asse
 import { Errors } from '../common/errors';
 import type { AuthContext, ResultState } from '../common/types';
 import { TERMS, TERM_LABELS } from '../common/types';
-import { PostgresStateService } from '../database/postgres-state.service';
+import { RedisService } from '../redis/redis.service';
 import {
   assessmentPercent,
   assessmentState,
@@ -53,7 +53,7 @@ export class AnalyticsService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly results: ResultsService,
     private readonly scope: TeacherScopeService,
-    private readonly state: PostgresStateService,
+    private readonly redis: RedisService,
     private readonly audit: AuditService,
   ) {}
 
@@ -80,7 +80,7 @@ export class AnalyticsService {
       [classId, mine],
     );
     const key = `section:${sectionId}:${classSections.map((s) => s.id).join(',')}`;
-    const body = await this.state.cached(`year:${yearId}`, key, CACHE_SECONDS, () => this.buildSection(sectionId, label, classSections, yearId));
+    const body = await this.redis.cached(`year:${yearId}`, key, CACHE_SECONDS, () => this.buildSection(sectionId, label, classSections, yearId));
     return { academicYear: year, ...body };
   }
 
@@ -200,7 +200,7 @@ export class AnalyticsService {
     if (!year) {
       return { academicYear: null, totals: { students: 0, sections: assigned.length }, empty: true };
     }
-    const body = await this.state.cached(`year:${year.id}`, `dashboard:${[...assigned].sort().join(',')}`, CACHE_SECONDS, () => this.buildDashboard(year.id, assigned));
+    const body = await this.redis.cached(`year:${year.id}`, `dashboard:${[...assigned].sort().join(',')}`, CACHE_SECONDS, () => this.buildDashboard(year.id, assigned));
     // recent activity is personal and must always be fresh, so it is outside the cache
     const recentActivity = await this.audit.recentActivity(auth.userId, year.id, 8);
     return { academicYear: year, ...body, recentActivity };

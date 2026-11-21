@@ -91,7 +91,7 @@ describe('import parser (no database)', () => {
   });
 });
 
-describe('student import (HTTP, database)', () => {
+describe('student import (HTTP, database, Redis)', () => {
   let t: TestApp;
   let teacher: Client;
   let other: Client; // only assigned to 1C

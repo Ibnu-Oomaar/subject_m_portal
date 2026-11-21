@@ -29,6 +29,7 @@ export class ApiError extends Error {
 
 let csrfToken = '';
 let onUnauthenticated: (() => void) | null = null;
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL as string | undefined)?.replace(/\/+$/, '') ?? '';
 
 export const setCsrfToken = (token: string): void => {
   csrfToken = token;
@@ -41,11 +42,11 @@ export const setUnauthenticatedHandler = (handler: (() => void) | null): void =>
 type Query = Record<string, string | number | boolean | undefined | null>;
 
 export function withQuery(path: string, query?: Query): string {
-  if (!query) return `/api${path}`;
+  if (!query) return `${API_BASE_URL}/api${path}`;
   const params = new URLSearchParams();
   for (const [k, v] of Object.entries(query)) if (v !== undefined && v !== null && v !== '') params.set(k, String(v));
   const qs = params.toString();
-  return `/api${path}${qs ? `?${qs}` : ''}`;
+  return `${API_BASE_URL}/api${path}${qs ? `?${qs}` : ''}`;
 }
 
 async function toError(res: Response): Promise<ApiError> {
@@ -71,7 +72,7 @@ async function send(method: string, path: string, opts: { query?: Query; body?: 
   }
   let res: Response;
   try {
-    res = await fetch(withQuery(path, opts.query), { method, headers, body, credentials: 'same-origin' });
+    res = await fetch(withQuery(path, opts.query), { method, headers, body, credentials: 'include' });
   } catch {
     throw new ApiError(0, { code: 'NETWORK', message: 'Cannot reach the server. Check your connection and try again.' });
   }

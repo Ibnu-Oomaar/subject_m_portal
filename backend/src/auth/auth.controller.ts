@@ -25,7 +25,7 @@ type StudentLoginDto = z.infer<typeof studentLoginSchema>;
 const cookieOptions = (): CookieOptions => ({
   httpOnly: true, // not readable by page scripts, so XSS cannot steal the session
   secure: env.cookieSecure,
-  sameSite: 'lax',
+  sameSite: env.isProduction ? 'none' : 'lax',
   path: '/',
 });
 

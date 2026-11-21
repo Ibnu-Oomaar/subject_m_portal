@@ -152,15 +152,13 @@ describe('Socket.IO: session lifetime', () => {
     const sid = c.cookie.split('=')[1]!;
     const { createHash } = await import('node:crypto');
     const key = `sess:${createHash('sha256').update(sid).digest('hex')}`;
-    await t.ds.query(`UPDATE app_state SET expires_at = now() + interval '100 seconds' WHERE state_key = $1`, [key]);
+    const redis = (await import('../src/redis/redis.service')).RedisService;
+    const client = t.app.get(redis).client;
+    await client.expire(key, 100);
     const socket = await ready(connect(c)); // connecting is real activity: it may extend the session
-    await t.ds.query(`UPDATE app_state SET expires_at = now() + interval '100 seconds' WHERE state_key = $1`, [key]);
+    await client.expire(key, 100); // reset to a known value
     await t.app.get(EventsGateway).recheckSessions();
-    const [{ ttl }] = (await t.ds.query(
-      `SELECT ceil(extract(epoch FROM (expires_at - now()))) AS ttl FROM app_state WHERE state_key = $1`,
-      [key],
-    )) as Array<{ ttl: number }>;
-    expect(Number(ttl)).toBeLessThanOrEqual(100); // the background check left the timer alone
+    expect(await client.ttl(key)).toBeLessThanOrEqual(100); // the background check left the timer alone
     socket.close();
   });
 

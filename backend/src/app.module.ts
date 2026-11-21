@@ -14,8 +14,8 @@ import { ResultsModule } from './results/results.module';
 import { ClassesModule } from './classes/classes.module';
 import { env } from './config/env';
 import { buildDataSourceOptions } from './database/data-source';
-import { PostgresStateModule } from './database/postgres-state.module';
 import { HealthController } from './health.controller';
+import { RedisModule } from './redis/redis.module';
 import { SectionsModule } from './sections/sections.module';
 import { SecurityModule } from './security/security.module';
 import { StudentsModule } from './students/students.module';
@@ -24,7 +24,7 @@ import { TeachersModule } from './teachers/teachers.module';
 @Module({
   imports: [
     TypeOrmModule.forRoot(buildDataSourceOptions(env.DATABASE_URL, env.DB_LOGGING)),
-    PostgresStateModule,
+    RedisModule,
     SecurityModule,
     TeachersModule,
     ClassesModule,
