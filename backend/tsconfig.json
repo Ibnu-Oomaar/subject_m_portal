@@ -6,9 +6,6 @@
     "lib": [
       "ES2023"
     ],
-    "types": [
-      "bun"
-    ],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
     "strict": true,
@@ -20,7 +17,6 @@
     "forceConsistentCasingInFileNames": true
   },
   "include": [
-    "src/**/*.ts",
-    "test/**/*.ts"
+    "src/**/*.ts"
   ]
 }
