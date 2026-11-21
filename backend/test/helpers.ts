@@ -4,7 +4,6 @@ import { NestFactory } from '@nestjs/core';
 import { DataSource } from 'typeorm';
 import { AppModule } from '../src/app.module';
 import { configureApp } from '../src/app.setup';
-import { RedisService } from '../src/redis/redis.service';
 import { TeachersService } from '../src/teachers/teachers.service';
 
 export interface Res<T = any> {
@@ -85,9 +84,8 @@ export async function startApp(): Promise<TestApp> {
   const [{ db }] = (await ds.query('select current_database() as db')) as Array<{ db: string }>;
   if (!db.endsWith('_test')) throw new Error(`Refusing to reset non-test database "${db}"`);
   await ds.query(
-    `TRUNCATE audit_logs, exam_marks, examinations, assessments, enrollments, students, academic_years, teacher_sections, teachers RESTART IDENTITY CASCADE`,
+    `TRUNCATE app_state, audit_logs, exam_marks, examinations, assessments, enrollments, students, academic_years, teacher_sections, teachers RESTART IDENTITY CASCADE`,
   );
-  await app.get(RedisService).client.flushdb();
   return {
     app,
     url: `http://localhost:${port}`,

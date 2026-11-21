@@ -6,14 +6,14 @@ in with their Student ID to see their own results (read-only).
 
 | Layer | Technology |
 | --- | --- |
-| Backend | NestJS 12 · TypeScript · Express 5 · PostgreSQL · TypeORM (migrations) · Redis · Bun |
+| Backend | NestJS 12 · TypeScript · Express 5 · PostgreSQL · TypeORM (migrations) · Bun |
 | Frontend | React 19 · TypeScript · Vite · Tailwind CSS v4 · shadcn/ui-style components (Radix) |
 | Support | TanStack Query · React Hook Form · Zod · ExcelJS · Socket.IO · Argon2id (via `Bun.password`, no extra package) · Postman |
 
 ## Requirements
 
 - [Bun](https://bun.sh) 1.4+ (runs the TypeScript backend directly and installs packages)
-- PostgreSQL (developed and tested against 16) and Redis running locally
+- PostgreSQL (developed and tested against 16) running locally
 
 ## Setup
 
@@ -24,7 +24,7 @@ createdb mathportal_test       # only needed to run the backend test suite
 
 # 2. Backend
 cd backend
-cp .env.example .env           # adjust DATABASE_URL / REDIS_URL if needed
+# Use the existing .env file; adjust DATABASE_URL for the local PostgreSQL database if needed.
 bun install
 bun run migration:run          # creates the schema and the fixed reference data (classes 1B-1H, assessment categories)
 bun run seed:teacher -- --name "Your Full Name"    # creates the teacher account (there is no public registration)
@@ -51,10 +51,11 @@ Argon2-hashed passcode that is then required in addition to the name. See *Known
 
 ### Environment (`backend/.env`)
 
-See `backend/.env.example`; every variable is documented there. The important ones: `DATABASE_URL`, `REDIS_URL`,
-`APP_ORIGIN` (the browser origin(s) of the frontend, used for the CSRF Origin check and Socket.IO), `TRUST_PROXY`
-(reverse-proxy hops, so rate limiting sees real client IPs), `COOKIE_SECURE` (defaults to true in production),
-`STUDENT_ID_PATTERN` (adjust to the school's real ID format), and the login rate-limit settings.
+The existing `backend/.env` is the single local configuration file. `DATABASE_URL` and `APP_ORIGIN` are required;
+other settings are documented and validated by `backend/src/config/env.ts`. `APP_ORIGIN`
+contains the browser origin(s) of the frontend for the CSRF Origin check and Socket.IO. Other settings include
+`TRUST_PROXY` (reverse-proxy hops, so rate limiting sees real client IPs), `COOKIE_SECURE` (defaults to true in
+production), `STUDENT_ID_PATTERN` (adjust to the school's real ID format), and the login rate-limit settings.
 
 ### Production
 
@@ -69,20 +70,18 @@ and use HTTPS (cookies are `Secure` in production). Run `bun run migration:run` 
 script is a type-check because Bun executes the TypeScript directly.
 
 Keep one local environment file at `backend/.env`; it is ignored by Git and must not contain committed production
-secrets. The backend always allows the deployed Vercel frontend origin; set `APP_ORIGIN` to that URL (and any other
-frontend origins) in Render's backend web service Environment settings. Also set `REDIS_URL` to the connection URL of a
-provisioned Redis/Key Value service, then redeploy. The local Redis URL in `backend/.env` is only for development;
-`localhost` will not connect to a Render Redis service.
+secrets. On Render, set the same variable names in the backend web service Environment settings; Render does not read
+the local `.env` file. Set `APP_ORIGIN` to the exact frontend origin URL(s) in Render's backend web service settings.
 
 ## Tests
 
 ```bash
-cd backend  && NODE_ENV=test bun run migration:run && bun test    # 133 tests: real HTTP, PostgreSQL, Redis, WebSockets
+cd backend  && NODE_ENV=test bun run migration:run && bun test    # integration tests: HTTP, PostgreSQL, WebSockets
 cd frontend && bun run typecheck && bun run test && bun run build  # type-check, 44 unit tests, production build
 ```
 
-The backend suite resets only a database whose name ends in `_test` (it refuses anything else). Test settings come from
-`backend/.env.test`.
+The backend suite resets only a database whose name ends in `_test` (it refuses anything else). Use the existing
+`backend/.env` for test settings as well; do not create a separate environment file.
 
 **End-to-end (browser)** – `e2e/run.cjs` drives the real UI against the real API and database with Playwright: login,
 academic year, Excel/CSV import (errors, duplicates), mark entry and validation, two-tab conflict, finalization and
@@ -140,7 +139,7 @@ specification defines no combined grading formula, so none is invented:
 
 ```
 backend/   src/{auth,security,students,academic-years,assessments,examinations,marks,results,analytics,rankings,
-                excel,reports,events,teachers,sections,classes,database,common,config,redis}  test/
+                excel,reports,events,teachers,sections,classes,database,common,config}  test/
 frontend/  src/{pages,components,layouts,hooks,auth,theme,lib}
 e2e/       Playwright end-to-end suite and its fixture
 postman/   API collection
@@ -150,7 +149,7 @@ postman/   API collection
 
 - **Authentication is weak by specification.** The specification asks for teacher sign-in by registered name only and
   student sign-in by Student ID only, with no passwords. Anyone who knows a name or an ID can sign in as that person.
-  It is mitigated (failed sign-ins are counted per name/Student ID and per IP in Redis, 10 per identifier in 15 minutes
+  It is mitigated (failed sign-ins are counted per name/Student ID and per IP in PostgreSQL, 10 per identifier in 15 minutes
   by default; secure HttpOnly sessions; CSRF protection; server-side authorization; students limited to their own data)
   but not removed. The per-identifier lockout has a cost: someone who knows the teacher's name can deliberately lock that
   sign-in for the window. The optional teacher passcode closes the largest

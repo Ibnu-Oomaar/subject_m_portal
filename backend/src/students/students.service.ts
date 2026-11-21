@@ -5,7 +5,7 @@ import { AcademicYear } from '../academic-years/academic-year.entity';
 import { Errors } from '../common/errors';
 import type { AuthContext } from '../common/types';
 import { env } from '../config/env';
-import { RedisService } from '../redis/redis.service';
+import { PostgresStateService } from '../database/postgres-state.service';
 import { AuditService } from '../security/audit.service';
 import { TeacherScopeService } from '../teachers/teachers.service';
 import { Enrollment } from './enrollment.entity';
@@ -76,7 +76,7 @@ export class StudentsService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly scope: TeacherScopeService,
     private readonly audit: AuditService,
-    private readonly redis: RedisService,
+    private readonly state: PostgresStateService,
   ) {}
 
   findByStudentId(studentId: string): Promise<Student | null> {
@@ -191,7 +191,7 @@ export class StudentsService {
       });
       return { enrollment, student, existing };
     });
-    await this.redis.invalidate(`year:${dto.academicYearId}`);
+    await this.state.invalidate(`year:${dto.academicYearId}`);
     return {
       enrollmentId: result.enrollment.id,
       studentId: result.student.studentId,
@@ -222,7 +222,7 @@ export class StudentsService {
       `SELECT DISTINCT academic_year_id FROM enrollments WHERE student_id = $1`,
       [ctx.studentUuid],
     );
-    await Promise.all(years.map((y) => this.redis.invalidate(`year:${y.academic_year_id}`)));
+    await Promise.all(years.map((y) => this.state.invalidate(`year:${y.academic_year_id}`)));
     return { enrollmentId, fullName };
   }
 }

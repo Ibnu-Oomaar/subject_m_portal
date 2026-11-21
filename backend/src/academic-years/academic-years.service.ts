@@ -3,7 +3,7 @@ import { InjectDataSource, InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { Errors } from '../common/errors';
 import type { AuthContext } from '../common/types';
-import { RedisService } from '../redis/redis.service';
+import { PostgresStateService } from '../database/postgres-state.service';
 import { AuditService } from '../security/audit.service';
 import { AcademicYear } from './academic-year.entity';
 
@@ -27,7 +27,7 @@ export class AcademicYearsService {
     @InjectRepository(AcademicYear) private readonly years: Repository<AcademicYear>,
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly audit: AuditService,
-    private readonly redis: RedisService,
+    private readonly state: PostgresStateService,
   ) {}
 
   async list(sectionIds: string[]): Promise<AcademicYearView[]> {
@@ -113,7 +113,7 @@ export class AcademicYearsService {
       });
       return manager.findOneByOrFail(AcademicYear, { id });
     });
-    await this.redis.invalidate(`year:${id}`);
+    await this.state.invalidate(`year:${id}`);
     return updated;
   }
 
@@ -133,7 +133,7 @@ export class AcademicYearsService {
       });
       return manager.findOneByOrFail(AcademicYear, { id });
     });
-    await this.redis.invalidate(`year:${id}`);
+    await this.state.invalidate(`year:${id}`);
     return updated;
   }
 

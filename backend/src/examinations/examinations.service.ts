@@ -6,7 +6,7 @@ import { AcademicYear } from '../academic-years/academic-year.entity';
 import { AppError, Errors } from '../common/errors';
 import type { AuthContext, ResultState } from '../common/types';
 import { TERM_LABELS } from '../common/types';
-import { RedisService } from '../redis/redis.service';
+import { PostgresStateService } from '../database/postgres-state.service';
 import { percentOf, summarize } from '../results/calculations';
 import { Section } from '../sections/section.entity';
 import { AuditService } from '../security/audit.service';
@@ -95,7 +95,7 @@ export class ExaminationsService {
     private readonly scope: TeacherScopeService,
     private readonly students: StudentsService,
     private readonly audit: AuditService,
-    private readonly redis: RedisService,
+    private readonly state: PostgresStateService,
   ) {}
 
   async list(auth: AuthContext, q: { academicYearId: string; sectionId?: string; term?: number }): Promise<ExaminationView[]> {
@@ -171,7 +171,7 @@ export class ExaminationsService {
       }
       return ids;
     });
-    await this.redis.invalidate(`year:${input.academicYearId}`);
+    await this.state.invalidate(`year:${input.academicYearId}`);
     const rows: ExamRow[] = await this.dataSource.query(`${EXAM_SQL} WHERE x.id = ANY($1::uuid[]) ORDER BY sec.label`, [created]);
     return rows.map(toView);
   }
@@ -224,7 +224,7 @@ export class ExaminationsService {
         context: { sectionLabel: current.sectionLabel, examName: next.name, term: exam.term },
       });
     });
-    await this.redis.invalidate(`year:${current.academicYearId}`);
+    await this.state.invalidate(`year:${current.academicYearId}`);
     return this.getAccessible(auth, id);
   }
 
@@ -248,7 +248,7 @@ export class ExaminationsService {
         context: { sectionLabel: current.sectionLabel, examName: current.name, term: current.term },
       });
     });
-    await this.redis.invalidate(`year:${current.academicYearId}`);
+    await this.state.invalidate(`year:${current.academicYearId}`);
   }
 
   /** The marks-entry sheet: every student of the section with their mark (or null when missing). */

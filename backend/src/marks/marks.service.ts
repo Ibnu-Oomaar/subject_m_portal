@@ -10,7 +10,7 @@ import type { AuthContext } from '../common/types';
 import { ExamMark } from '../examinations/exam-mark.entity';
 import { Examination } from '../examinations/examination.entity';
 import { EventsService } from '../events/events.service';
-import { RedisService } from '../redis/redis.service';
+import { PostgresStateService } from '../database/postgres-state.service';
 import { assessmentState, assessmentTotal, emptyScores, type AssessmentScores } from '../results/calculations';
 import { Section } from '../sections/section.entity';
 import { AuditService, type AuditEntry } from '../security/audit.service';
@@ -65,7 +65,7 @@ export class MarksService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly scope: TeacherScopeService,
     private readonly audit: AuditService,
-    private readonly redis: RedisService,
+    private readonly state: PostgresStateService,
     private readonly events: EventsService,
   ) {}
 
@@ -501,7 +501,7 @@ export class MarksService {
   /** After commit: drop cached analytics and tell open dashboards. Failures here must never fail the save. */
   private async afterWrite(yearId: string, sectionId: string, kind: 'assessment' | 'exam', term: number, examId?: string) {
     try {
-      await this.redis.invalidate(`year:${yearId}`);
+      await this.state.invalidate(`year:${yearId}`);
     } catch (e) {
       this.logger.warn(`Cache invalidation failed: ${(e as Error).message}`);
     }

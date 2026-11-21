@@ -5,7 +5,7 @@ import { ASSESSMENT_MAX_TOTAL } from '../assessments/assessment-categories';
 import { Errors } from '../common/errors';
 import type { AuthContext, Term } from '../common/types';
 import { TERM_LABELS } from '../common/types';
-import { RedisService } from '../redis/redis.service';
+import { PostgresStateService } from '../database/postgres-state.service';
 import { assessmentPercent, assessmentState, assessmentTotal, byName, isCounted, percentOf, rankDescending } from '../results/calculations';
 import { ResultsService } from '../results/results.service';
 import { computeStudentResults } from '../results/student-results';
@@ -53,7 +53,7 @@ export class RankingsService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly results: ResultsService,
     private readonly scope: TeacherScopeService,
-    private readonly redis: RedisService,
+    private readonly state: PostgresStateService,
   ) {}
 
   async rank(auth: AuthContext, q: RankingQuery): Promise<RankingResult> {
@@ -72,7 +72,7 @@ export class RankingsService {
       );
     }
     const key = `rank:${q.scope}:${q.kind}:${q.term ?? ''}:${q.examId ?? ''}:${sections.map((s) => s.id).join(',')}`;
-    const body = await this.redis.cached(`year:${q.academicYearId}`, key, 300, () => this.compute(q, sections, year.label));
+    const body = await this.state.cached(`year:${q.academicYearId}`, key, 300, () => this.compute(q, sections, year.label));
     return body;
   }
 

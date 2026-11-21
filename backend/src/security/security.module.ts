@@ -3,8 +3,8 @@ import { APP_GUARD } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { env } from '../config/env';
-import { RedisService } from '../redis/redis.service';
-import { ThrottlerRedisStorage } from '../redis/throttler-redis.storage';
+import { PostgresStateService } from '../database/postgres-state.service';
+import { PostgresThrottlerStorage } from '../database/postgres-throttler.storage';
 import { AuditLog } from './audit-log.entity';
 import { AuditService } from './audit.service';
 import { LoginThrottleService } from './login-throttle.service';
@@ -15,12 +15,11 @@ import { SessionService } from './session.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([AuditLog]),
-    // Redis-backed so limits hold across processes and restarts.
     ThrottlerModule.forRootAsync({
-      inject: [RedisService],
-      useFactory: (redis: RedisService) => ({
+      inject: [PostgresStateService],
+      useFactory: (state: PostgresStateService) => ({
         throttlers: [{ name: 'default', ttl: 60_000, limit: env.API_RATE_LIMIT_PER_MINUTE }],
-        storage: new ThrottlerRedisStorage(redis),
+        storage: new PostgresThrottlerStorage(state),
       }),
     }),
   ],

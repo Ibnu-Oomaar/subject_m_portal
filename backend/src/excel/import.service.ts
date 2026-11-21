@@ -2,9 +2,9 @@ import { Injectable } from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { randomUUID } from 'node:crypto';
 import { DataSource } from 'typeorm';
+import { PostgresStateService } from '../database/postgres-state.service';
 import { Errors } from '../common/errors';
 import type { AuthContext } from '../common/types';
-import { RedisService } from '../redis/redis.service';
 import { AuditService } from '../security/audit.service';
 import { Enrollment } from '../students/enrollment.entity';
 import { Student } from '../students/student.entity';
@@ -56,7 +56,7 @@ export class ImportService {
     @InjectDataSource() private readonly dataSource: DataSource,
     private readonly scope: TeacherScopeService,
     private readonly audit: AuditService,
-    private readonly redis: RedisService,
+    private readonly state: PostgresStateService,
     private readonly excel: ExcelService,
   ) {}
 
@@ -205,7 +205,7 @@ export class ImportService {
     const errorRows = rows.filter((r) => r.status === 'error');
     const token = randomUUID();
     const stored: StoredPlan = { teacherId: auth.userId, academicYearId, fileName, rows: plan, errorCount: errorRows.length };
-    await this.redis.setJson(`import:${token}`, stored, PLAN_TTL_SECONDS);
+    await this.state.setJson(`import:${token}`, stored, PLAN_TTL_SECONDS);
 
     // keep the response small for huge files: all problems first, then as many good rows as fit
     let shown = rows;
@@ -241,10 +241,10 @@ export class ImportService {
   /** Saves a previewed import. The token is single-use: a second click or a replayed request cannot import twice. */
   async commit(auth: AuthContext, token: string, skipInvalid: boolean) {
     const lockKey = `import:lock:${token}`;
-    const lock = await this.redis.acquireLock(lockKey, 120);
+    const lock = await this.state.acquireLock(lockKey, 120);
     if (!lock) throw Errors.conflict('This import is already being saved.', undefined, 'IMPORT_IN_PROGRESS');
     try {
-      const plan = await this.redis.getJson<StoredPlan>(`import:${token}`);
+      const plan = await this.state.getJson<StoredPlan>(`import:${token}`);
       // A preview belonging to another teacher is reported exactly like a missing one: its existence is not revealed.
       if (!plan || plan.teacherId !== auth.userId) {
         throw Errors.conflict('This import preview has expired or was already saved. Upload the file again.', undefined, 'IMPORT_EXPIRED');
@@ -305,11 +305,11 @@ export class ImportService {
         return summary;
       });
 
-      await this.redis.client.del(`import:${token}`);
-      await this.redis.invalidate(`year:${plan.academicYearId}`);
+      await this.state.delete(`import:${token}`);
+      await this.state.invalidate(`year:${plan.academicYearId}`);
       return result;
     } finally {
-      await this.redis.releaseLock(lockKey, lock);
+      await this.state.releaseLock(lockKey, lock);
     }
   }
 }
